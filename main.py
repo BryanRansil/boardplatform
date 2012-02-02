@@ -16,6 +16,8 @@
 #
 __author__ = 'bryan.ransil@gmail.com (Bryan Ransil)'
 
+import web
+
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.ext.webapp.util import run_wsgi_app 
@@ -30,24 +32,6 @@ import gdata.sample_util
 import login
 import oauth2
 
-def CreateClient():
-  """Create a Documents List Client."""
-  client = gdata.docs.client.DocsClient(source=Config.APP_NAME)
-  client.http_client.debug = Config.DEBUG
-  # Authenticate the user with CLientLogin, OAuth, or AuthSub.
-  try:
-    gdata.sample_util.authorize_client(
-        client,
-        service=client.auth_service,
-        source=client.source,
-        scopes=client.auth_scopes
-    )
-  except gdata.client.BadAuthentication:
-    exit('Invalid user credentials given.')
-  except gdata.client.Error:
-    exit('Login Error')
-  return client
-
 def CreateEmptyMap():
     """Goal: Create one or more maps in a collection"""
     client = CreateClient()
@@ -58,21 +42,23 @@ def CreateEmptyMap():
   
 class MainHandler(webapp.RequestHandler):
     def get(self):
+        
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         #CreateEmptyMap();
         # Create a client class which will make HTTP requests with Google Docs server. 
         
         self.response.out.write('Hello World!')
-        self.response.out.write(""" <form action='login' method='post' name ='login'>
-            <input type = "hidden" name = "type" value="addMap" />
+        self.response.out.write(""" <form action='oauth2callback' method='post' name ='oauth2'>
+            <input type = "hidden" name = "type" value="login" />
             <input type="submit" value="Hello Back!"/></form> """)
 		
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
-                                          ('/login', login.LoginHandler),
-                                          ('/oauth2callback', oauth2.OAuthHandler)],
+                                          ('/oauth2callback', oauth2.OAuthHandler),
+                                          ('/catchtoken', oauth2.CatchTokenHandler)],
                                          debug=True)
+    session = web.session.Session(application, web.session.DiskStore('sessions'))
     util.run_wsgi_app(application)
 
 if __name__ == '__main__':
