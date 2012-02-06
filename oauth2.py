@@ -42,9 +42,6 @@ class OAuthHandler(webapp.RequestHandler):
           CONSUMER_KEY: string Domain identifying third_party web application.
           CONSUMER_SECRET: string Secret generated during registration.
         """
-
-        
-    
     def post(self):
         self.redirect( session.token.generate_authorize_url(redirect_uri=Config.APP_REDIRECT) )
         
@@ -58,6 +55,7 @@ class OAuthHandler(webapp.RequestHandler):
             # This is the token instantiated in the first section.
             (session.token).get_access_token(url.query)
             self.response.out.write("Hello!!!")
+            self.redirect(Config.APP_ROOT+"/create");
         
 class CatchTokenHandler(webapp.RequestHandler):
     def get(self):

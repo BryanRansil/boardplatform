@@ -29,15 +29,8 @@ import gdata.sample_util
 
 import login
 import oauth2
+import createmap
 
-def CreateEmptyMap():
-    """Goal: Create one or more maps in a collection"""
-    client = CreateClient()
-    col = gdata.docs.data.Resource(type='folder', title='You are AWESOME!')
-    col = client.CreateResource(col)
-    print 'Created collection:', col.title.text, col.resource_id.text
-  
-  
 class MainHandler(webapp.RequestHandler):
     def get(self):
         
@@ -54,7 +47,8 @@ class MainHandler(webapp.RequestHandler):
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
                                           ('/oauth2callback', oauth2.OAuthHandler),
-                                          ('/catchtoken', oauth2.CatchTokenHandler)],
+                                          ('/catchtoken', oauth2.CatchTokenHandler),
+                                          ('/create', createmap.MapHandler)],
                                          debug=True)
     util.run_wsgi_app(application)
 
