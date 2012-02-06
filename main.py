@@ -16,8 +16,6 @@
 #
 __author__ = 'bryan.ransil@gmail.com (Bryan Ransil)'
 
-import web
-
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.ext.webapp.util import run_wsgi_app 
@@ -58,7 +56,6 @@ def main():
                                           ('/oauth2callback', oauth2.OAuthHandler),
                                           ('/catchtoken', oauth2.CatchTokenHandler)],
                                          debug=True)
-    session = web.session.Session(application, web.session.DiskStore('sessions'))
     util.run_wsgi_app(application)
 
 if __name__ == '__main__':
