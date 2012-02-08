@@ -38,7 +38,6 @@ class MainHandler(webapp.RequestHandler):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         #CreateEmptyMap();
         # Create a client class which will make HTTP requests with Google Docs server. 
-        
         self.response.out.write('Hello World!')
         self.response.out.write(""" <form action='oauth2callback' method='post' name ='oauth2'>
             <input type = "hidden" name = "type" value="login" />

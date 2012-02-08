@@ -54,7 +54,7 @@ class OAuthHandler(webapp.RequestHandler):
         else :
             # This is the token instantiated in the first section.
             (session.token).get_access_token(url.query)
-            self.response.out.write("Hello!!!")
+            self.response.out.write("Should redirect you to the create map page... Now!")
             self.redirect(Config.APP_ROOT+"/create");
         
 class CatchTokenHandler(webapp.RequestHandler):
