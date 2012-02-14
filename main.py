@@ -42,6 +42,7 @@ class MainHandler(webapp.RequestHandler):
         self.response.out.write(""" <form action='oauth2callback' method='post' name ='oauth2'>
             <input type = "hidden" name = "type" value="login" />
             <input type="submit" value="Hello Back!"/></form> """)
+
 		
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
