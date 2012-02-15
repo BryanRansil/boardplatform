@@ -64,7 +64,7 @@ class MapHandler(webapp.RequestHandler):
             
         
         self.writeJavascript('incoming', layer1entry.content.src) 
-        self.response.out.write("<body onload='window.setInterval(content(incoming), 1*10);'>\n")
+        self.response.out.write('<body>\n')
         self.writeLeft()
         
         self.response.out.write("<div id = 'center' style = 'position:absolute;top:0px;left:15%;width:70%'>\n")
@@ -72,7 +72,6 @@ class MapHandler(webapp.RequestHandler):
         self.response.out.write(" <div style = 'background-color:grey'>\n")
         self.response.out.write(" <img id = 'incoming' alt = '" + layer1entry.content.src + "' src = '" + layer1entry.content.src + "'> \n")#+ "' onclick='content(" + '"incoming"' + ")'>\n" )
         
-        self.response.out.write('<button onclick="content()">Change</button>')
         #uploader = gdata.client.ResumableUploader(client, f, 'image/png', file_size)
         
         #new_entry = uploader.UploadFile('/feeds/upload/create-session/default/private/full', entry=layer1entry)
@@ -87,8 +86,9 @@ class MapHandler(webapp.RequestHandler):
         
     def writeJavascript(self, id, image):
         self.response.out.write("<script lang='javascript'>\n")
-        self.response.out.write("function content() {\n")
-        self.response.out.write("  document.getElementById(" + '"' + id + '"' + ").src = document.getElementById(" + '"' + id + '"' + ").alt;\n")#google processes this additional input +" + " + '"' + "?rand=" + '"' + " + Math.random();\n")
+        self.response.out.write("var interval = self.setInterval('content(" + '"incoming"' + ")', 1000);\n")
+        self.response.out.write("function content(id) {\n")
+        self.response.out.write("  document.getElementById(id).src = document.getElementById(id).alt;\n")#google processes this additional input +" + " + '"' + "?rand=" + '"' + " + Math.random();\n")
         self.response.out.write("}\n")
         self.response.out.write("</script>\n\n")
     
