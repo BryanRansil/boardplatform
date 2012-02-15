@@ -62,20 +62,25 @@ class MapHandler(webapp.RequestHandler):
         mapb = True
         l1b = True
         l2b = True
-        link = ''
+        content = client.download_resource_to_memory(documents_feed[0])
+        
         for entry in documents_feed :
-            if entry.title.text == "Map" :
+            if False :
+                print "Fundamental logic is flawed"
+            elif entry.title.text == 'Map' :
                 mapb = False
                 map = entry
             elif entry.title.text == "Layer1" :
                 l1b = False
                 layer1entry = entry
+                link = entry.get_resumable_edit_media_link()
+                content = entry.content
             elif entry.title.text == "Layer2" :
                 l2b = False
                 layer2entry = entry
-            if entry.title.text == "PC Screen" :
+            #elif entry.title.text == 'PC Screen' : #testing purposes
                 #download_doc_feed.download_resource(entry)
-                link = entry.get_resumable_edit_media_link()
+                #
                 
                 #entry.title.text = 'Test on PC' This pair worked to rename it...
                 #entry = client.Update(entry)
@@ -85,16 +90,31 @@ class MapHandler(webapp.RequestHandler):
                 
                 #content = client._get_content(entry.content, auth_token = oauth2.session.token)
             
+        
+        self.response.out.write("<div id = 'left' style = 'position:absolute;left:0px;top:0px;width:15%'>")
         if mapb :
+            self.response.out.write("In mapb!")
             col = Resource('folder', 'Map')
             map = client.create_resource(col)
         if l1b :
+            self.response.out.write("In l1b!")
             layer1 = Resource(type='drawing', title='Layer1')
             layer1entry = client.create_resource(layer1, collection=map)
         if l2b :
+            self.response.out.write("In l2b!")
             layer2 = Resource(type='drawing', title='Layer2')
             layer2entry = client.create_resource(layer2, collection=map)
             
+            
+        self.response.out.write('Left Buttons!<br>')
+        self.response.out.write("<button type='button'>Create Box</button>")
+        self.response.out.write("<button type='button'>Color</button>")
+        self.response.out.write("</div>")
+        self.response.out.write("<div id = 'center' style = 'position:absolute;top:0px;left:15%;width:70%'>")
+        self.response.out.write('Main Drawing Area!')
+        self.response.out.write("<div style = 'background-color:grey'>")
+        self.response.out.write("<img id = 'incoming' src = '" + content.src + "'>" )
+        
         #f = open("PCScreen.png")
         #file_size = os.path.getsize(f.name)
         #uploader = gdata.client.ResumableUploader(client, f, 'image/png', file_size)
@@ -102,19 +122,7 @@ class MapHandler(webapp.RequestHandler):
         #new_entry = uploader.UploadFile('/feeds/upload/create-session/default/private/full', entry=layer1entry)
         #self.redirect(link);
 
-
-        self.response.out.write("<div id = 'left' style = 'position:absolute;left:0px;top:0px;width:15%'>")
-        self.response.out.write('Left Buttons!<br>')
-        self.response.out.write("<button type='button'>Create Box</button>")
-        self.response.out.write("<button type='button'>Color</button>")
-        self.response.out.write("</div>")
-        self.response.out.write("<div id = 'center' style = 'position:absolute;top:0px;left:15%;width:70%'>")
-        self.response.out.write('Main Drawing Area!')
-        
-        self.response.out.write("<div style = 'width:25%;background-color:black'>")
-        
-        
-#        tag = entry.etag
+        tag = entry.etag
         params = urllib.urlencode({
             'GData-Version' : 3.0,
             'If-Match' : tag,
@@ -127,11 +135,11 @@ class MapHandler(webapp.RequestHandler):
         
         self.response.out.write("</div>")
         
-        self.response.out.write("<div style = 'position:relative;right:0%;top:-15px;width:25%;background-color:grey'>")
+        self.response.out.write("<div style = 'position:relative;right:0%;top:-15px;background-color:black'>")
         #self.mydownloadHandler.importImage()
         self.response.out.write("</div>")
         
-        self.response.out.write("<div id = 'right' style = 'position:absolute;right:0px;top:0px'>")
+        self.response.out.write("<div id = 'right' style = 'position:absolute;right:0px;top:0px;width:15%'>")
         self.response.out.write('Right Options!<br>')
         self.response.out.write("<button type='button'>Edit Hidden Layer</button>")
         self.response.out.write("<button type='button'>Show Selected</button>")
