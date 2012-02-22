@@ -33,21 +33,25 @@ import createmap
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
+        self.response.out.write("<head>")
+        self.response.out.write("</head>")
         
         # Set the cross origin resource sharing header to allow AJAX
-        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        #CreateEmptyMap();
+        #self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        self.response.out.write("<body>")
         # Create a client class which will make HTTP requests with Google Docs server. 
-        self.response.out.write('Hello World!')
+        self.response.out.write('Welcome to the Board Game Platform\n')
         self.response.out.write(""" <form action='oauth2callback' method='post' name ='oauth2'>
             <input type = "hidden" name = "type" value="login" />
-            <input type="submit" value="Hello Back!"/></form> """)
+            <input type="submit" value="Enter!"/></form> \n""")
+        self.response.out.write("</body>")
 
 		
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
                                           ('/oauth2callback', oauth2.OAuthHandler),
                                           ('/catchtoken', oauth2.CatchTokenHandler),
+                                          #('/newrect', rect.ShapeHandler),
                                           ('/create', createmap.MapHandler)],
                                          debug=True)
     util.run_wsgi_app(application)
