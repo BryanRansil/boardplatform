@@ -39,34 +39,68 @@ class MainHandler(webapp.RequestHandler):
         self.response.out.write('<script type="text/javascript">\n')
         self.response.out.write(" var posx = -1; \n var posy = -1;\n")
         self.response.out.write(" var pos1x = -1; \n var pos1y = -1;\n")
+        self.response.out.write(" var holding = null;\n var boxCount = 0;")
+        
+        #move
         self.response.out.write(' $(document).ready(function(){\n    $(document).mousemove(function(e){ \n')
         self.response.out.write('    posx = e.pageX;\n     posy = e.pageY;\n')
         self.response.out.write('    });\n')
         self.response.out.write('  });\n') 
+        
+        #mouse down
+        self.response.out.write(' $(document).ready(\n')
+        self.response.out.write('    function(){    $("#svgbasics").mousedown(function(e) {\n')
+        self.response.out.write('      pos1x = e.pageX;\n')
+        self.response.out.write('      pos1y = e.pageY;\n')
+        self.response.out.write("      var size = document.getElementById('svgbasics').firstChild.childNodes.length; var string = '';\n")
+        self.response.out.write('      for (var i = 0; i < size; i++) {\n')
+        self.response.out.write('         el = document.getElementById("svgbasics").firstChild.childNodes[i]; \n')
+        self.response.out.write('         box = document.getElementById("svgbasics").firstChild.childNodes[i].firstChild; \n')
+        #self.response.out.write('         string = string + "(box.x.animVal.value < posx) = " + (box.x.animVal.value < posx) + ' +
+        #                            '", box.x.animVal.value + box.width.animVal.value > posx: " + (box.x.animVal.value + box.width.animVal.value > posx) + ' + 
+        #                            '", (box.y.animVal.value < posy): " + (box.y.animVal.value < posy) + "; (box.y.animVal.value + box.height.animVal.value > posy): " + (box.y.animVal.value + box.height.animVal.value > posy) + ", ely: " + box.y.animVal.value + "; y-pos: " + posy + ", y+height: " + (box.y.animVal.value+box.height.animVal.value) + ".          ";\n')
+        self.response.out.write('         if((box.x.animVal.value < posx) && (box.x.animVal.value + box.width.animVal.value > posx) \n&& (box.y.animVal.value < posy) && (box.y.animVal.value + box.height.animVal.value > posy)) { //assuming rectangles for now\n')
+        self.response.out.write('            holding = el;\n')
+        self.response.out.write('            i = size;\n')
+        
+        self.response.out.write('         } else { holding = null; }\n')
+        self.response.out.write('      }\n $("span").text(string);\n')
+        self.response.out.write('    });\n')
+        self.response.out.write('  });\n') 
+        
+        #mouse up
+        self.response.out.write(" function release() {\n")
+        self.response.out.write("      if (holding == null) drawShape(); else {\n")
+        #self.response.out.write('            alert(" activate!");\n')
+        self.response.out.write("         svg = $('#svgbasics').svg('get');\n")
+        self.response.out.write("         el = svg.getElementById(holding.id);\n")
+        self.response.out.write("         width = el.firstChild.width.animVal.value;\n")
+        self.response.out.write("         height = el.firstChild.height.animVal.value;\n")
+        self.response.out.write("         svg.remove(el);\n")
+        self.response.out.write("         var group = svg.group(null, holding.id);\n")
+        self.response.out.write("         svg.rect(group, posx, posy, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 2});\n")
+        self.response.out.write("      }\n")
+        self.response.out.write(" }\n")
+        
+
         self.response.out.write(" function drawShape() {\n    var shape = this.id;\n    var svg = $('#svgbasics').svg('get');\n")
         self.response.out.write("    var x = 0; \n    var y = 0; \n    var width = 0; \n    var height = 0;\n")
         self.response.out.write("    if (pos1x > posx) {\n      x = posx;\n      width = pos1x - posx;\n    " + 
                                 "} else { \n      x = pos1x;\n      width = posx - pos1x;\n    }\n")
         self.response.out.write("    if (pos1y > posy) {\n      y = posy;\n      height = pos1y - posy;\n    " + 
-                                "} else { \n      y = pos1y;\n      height = posy - pos1y;\n    }\n")
-        self.response.out.write('    $("span").text("X: " + x + ", Y: " + y + ", X1: " + width + ", Y1: " + height);\n')
-        self.response.out.write("    svg.rect(x, y, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 5});\n")
+                                "} else { \n      y = pos1y;\n      height = posy - pos1y;\n    }\n")#$('span').text(document.getElementById('svgbasics').firstChild.childNodes.length);") #
+        self.response.out.write("    var group = svg.group(null, 'box_' + boxCount);\n")
+        self.response.out.write("    svg.rect(group, x, y, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 2});\n")
+        self.response.out.write("    boxCount++;\n")
         self.response.out.write(" }")
-        self.response.out.write(' $(document).ready(function(){\n    $("#svgbasics").mousedown(function(e) {\n')
-        self.response.out.write('      pos1x = e.pageX;\n')
-        self.response.out.write('      pos1y = e.pageY;\n')
-        self.response.out.write('    });\n')
-        self.response.out.write('  });\n') 
+        
         self.response.out.write(' $(function() {')
         self.response.out.write("    $('#svgbasics').svg({onLoad: drawInitial});\n")
-        self.response.out.write('    $("#svgbasics").mouseup(drawShape);\n') 
+        self.response.out.write('    $("#svgbasics").mouseup(release);\n') 
         self.response.out.write(" }\n );\n")
-        self.response.out.write(" function random(range) {\n    return Math.floor(Math.random() * range);\n}\n")
+        
         self.response.out.write(" function drawInitial(svg) {\n")
-        self.response.out.write("    svg.circle(75, 75, 50, {fill: 'none', stroke: 'red', 'stroke-width': 3});\n")
-        self.response.out.write("    var g = svg.group({stroke: 'black', 'stroke-width': 2});\n")
-        self.response.out.write("    svg.line(g, 15, 75, 135, 75);\n")
-        self.response.out.write("    svg.line(g, 75, 15, 75, 135);\n")
+        self.response.out.write("    $('span').text(document.getElementById('svgbasics').childNodes.length);\n")
         self.response.out.write(" }\n")
         self.response.out.write(" </script>\n")
         
