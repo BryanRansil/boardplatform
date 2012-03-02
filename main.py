@@ -30,6 +30,7 @@ import gdata.sample_util
 import login
 import oauth2
 import createmap
+import rect
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
@@ -40,20 +41,21 @@ class MainHandler(webapp.RequestHandler):
         self.response.out.write(" var posx = -1; \n var posy = -1;\n")
         self.response.out.write(" var pos1x = -1; \n var pos1y = -1;\n")
         self.response.out.write(" var holding = null;\n var boxCount = 0;")
+        self.response.out.write(" var topAdjustment = 55; \n var leftAdjustment = 5;")
         
         #move
         self.response.out.write(' $(document).ready(function(){\n    $(document).mousemove(function(e){ \n')
-        self.response.out.write('    posx = e.pageX;\n     posy = e.pageY;\n')
+        self.response.out.write('    posx = e.pageX - leftAdjustment;\n     posy = e.pageY-topAdjustment;\n')
         self.response.out.write('    });\n')
         self.response.out.write('  });\n') 
         
         #mouse down
         self.response.out.write(' $(document).ready(\n')
         self.response.out.write('    function(){    $("#svgbasics").mousedown(function(e) {\n')
-        self.response.out.write('      pos1x = e.pageX;\n')
-        self.response.out.write('      pos1y = e.pageY;\n')
+        self.response.out.write('      pos1x = e.pageX - leftAdjustment;\n')
+        self.response.out.write('      pos1y = e.pageY-topAdjustment;\n')
         self.response.out.write("      var size = document.getElementById('svgbasics').firstChild.childNodes.length; var string = '';\n")
-        self.response.out.write('      for (var i = 0; i < size; i++) {\n')
+        self.response.out.write('      for (var i = size - 1; i >= 0; i--) {\n')
         self.response.out.write('         el = document.getElementById("svgbasics").firstChild.childNodes[i]; \n')
         self.response.out.write('         box = document.getElementById("svgbasics").firstChild.childNodes[i].firstChild; \n')
         #self.response.out.write('         string = string + "(box.x.animVal.value < posx) = " + (box.x.animVal.value < posx) + ' +
@@ -61,12 +63,11 @@ class MainHandler(webapp.RequestHandler):
         #                            '", (box.y.animVal.value < posy): " + (box.y.animVal.value < posy) + "; (box.y.animVal.value + box.height.animVal.value > posy): " + (box.y.animVal.value + box.height.animVal.value > posy) + ", ely: " + box.y.animVal.value + "; y-pos: " + posy + ", y+height: " + (box.y.animVal.value+box.height.animVal.value) + ".          ";\n')
         self.response.out.write('         if((box.x.animVal.value < posx) && (box.x.animVal.value + box.width.animVal.value > posx) \n&& (box.y.animVal.value < posy) && (box.y.animVal.value + box.height.animVal.value > posy)) { //assuming rectangles for now\n')
         self.response.out.write('            holding = el;\n')
-        self.response.out.write('            i = size;\n')
+        self.response.out.write('            i = -1;\n')
         
         self.response.out.write('         } else { holding = null; }\n')
-        self.response.out.write('      }\n $("span").text(string);\n')
-        self.response.out.write('    });\n')
-        self.response.out.write('  });\n') 
+        #self.response.out.write('      }\n $("span").text(string);\n')
+        self.response.out.write('    }});});\n') 
         
         #mouse up
         self.response.out.write(" function release() {\n")
@@ -90,7 +91,7 @@ class MainHandler(webapp.RequestHandler):
         self.response.out.write("    if (pos1y > posy) {\n      y = posy;\n      height = pos1y - posy;\n    " + 
                                 "} else { \n      y = pos1y;\n      height = posy - pos1y;\n    }\n")#$('span').text(document.getElementById('svgbasics').firstChild.childNodes.length);") #
         self.response.out.write("    var group = svg.group(null, 'box_' + boxCount);\n")
-        self.response.out.write("    svg.rect(group, x, y, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 2});\n")
+        self.response.out.write("    svg.rect(group, x, y, width, height, {fill: 'blue', stroke: 'blue', strokeWidth: 4});\n")
         self.response.out.write("    boxCount++;\n")
         self.response.out.write(" }")
         
@@ -111,13 +112,11 @@ class MainHandler(webapp.RequestHandler):
         self.response.out.write("<body>")
         # Create a client class which will make HTTP requests with Google Docs server. 
         self.response.out.write('Welcome to the Board Game Platform\n')
-        self.response.out.write('<button id="activate">Reveal!</button>\n')
         self.response.out.write('<span></span>\n')
-        self.response.out.write('<div id="svgbasics"></div>')
         self.response.out.write(""" <form action='oauth2callback' method='post' name ='oauth2'>
             <input type = "hidden" name = "type" value="login" />
             <input type="submit" value="Enter!"/></form> \n""")
-        self.response.out.write('<div id="svgbasics"></div>')
+        self.response.out.write('<div id="svgbasics" style="border-style:double;height:400px;border-width:5px"></div>')
         self.response.out.write("</body>")
 
 		
@@ -125,7 +124,7 @@ def main():
     application = webapp.WSGIApplication([('/', MainHandler),
                                           ('/oauth2callback', oauth2.OAuthHandler),
                                           ('/catchtoken', oauth2.CatchTokenHandler),
-                                          #('/newrect', rect.ShapeHandler),
+                                          ('/rect', rect.ShapeHandler),
                                           ('/create', createmap.MapHandler)],
                                          debug=True)
     util.run_wsgi_app(application)
