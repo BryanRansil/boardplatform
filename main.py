@@ -32,93 +32,113 @@ import oauth2
 import createmap
 import rect
 
+def templ ():
+        templ = """<head>
+        <script type="text/javascript" src="/static/js/jquery.js"></script>
+        <script type="text/javascript" src="/static/js/jquery/jquery.svg.js"></script>
+        <script type="text/javascript">
+         var posx = -1;
+	 var posy = -1;
+         var pos1x = -1;
+	 var pos1y = -1;
+         var holding = null; 
+	 var boxCount = 0;
+         var topAdjustment = 55;
+	 var leftAdjustment = 5;
+       
+	//move 
+         $(document).ready(function(){
+            $(document).mousemove(function(e){ 
+            posx = e.pageX - leftAdjustment;
+            posy = e.pageY-topAdjustment;
+            });
+          });
+        
+	//mouse down
+         $(document).ready(
+            function(){    $("#svgbasics").mousedown(function(e) {
+              pos1x = e.pageX - leftAdjustment;
+              pos1y = e.pageY-topAdjustment;
+              var size = document.getElementById('svgbasics').firstChild.childNodes.length; var string = '';
+              for (var i = size - 1; i >= 0; i--) {
+                 el = document.getElementById("svgbasics").firstChild.childNodes[i]; 
+                 box = document.getElementById("svgbasics").firstChild.childNodes[i].firstChild;
+                 if((box.x.animVal.value < posx) && (box.x.animVal.value + box.width.animVal.value > posx) \n&& (box.y.animVal.value < posy) && (box.y.animVal.value + box.height.animVal.value > posy)) { //assuming rectangles for now
+                    holding = el;
+                    i = -1;
+        
+                 } else { holding = null; }
+            }});}); 
+        
+        //mouse up
+         function release() {
+              if (holding == null) drawShape(); else {
+        //            alert(" activate!");
+                 svg = $('#svgbasics').svg('get');
+                 el = svg.getElementById(holding.id);
+                 width = el.firstChild.width.animVal.value;
+                 height = el.firstChild.height.animVal.value;
+                 svg.remove(el);
+                 var group = svg.group(null, holding.id);
+                 svg.rect(group, posx, posy, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 2});
+              }
+         }
+        
+
+
+         function drawShape() {
+            var shape = this.id;
+            var svg = $('#svgbasics').svg('get');
+            var x = 0;
+            var y = 0; 
+            var width = 0;
+	    var height = 0;
+            if (pos1x > posx) {
+	      	x = posx;
+		width = pos1x - posx; 
+            } else {
+	        x = pos1x;
+                width = posx - pos1x;
+            }
+            if (pos1y > posy) {
+                y = posy;
+                height = pos1y - posy;
+            } else { 
+	        y = pos1y;\n
+	    	height = posy - pos1y;
+	    }
+            var group = svg.group(null, 'box_' + boxCount);
+            svg.rect(group, x, y, width, height, {fill: 'blue', stroke: 'blue', strokeWidth: 4});
+            boxCount++;
+         }
+        
+         $(function() {
+            $('#svgbasics').svg({onLoad: drawInitial});
+            $("#svgbasics").mouseup(release);
+         }
+	 );
+        
+         function drawInitial(svg) {
+           $('span').text(document.getElementById('svgbasics').childNodes.length);
+         }
+         </script>
+        
+        </head>
+        
+        <body>
+        Welcome to the Board Game Platform
+        <span></span>
+        <form action='oauth2callback' method='post' name ='oauth2'>
+            <input type = "hidden" name = "type" value="login" />
+            <input type="submit" value="Enter!"/></form>
+        <div id="svgbasics" style="border-style:double;height:400px;border-width:5px"></div>
+        </body>"""
+        return templ
+
 class MainHandler(webapp.RequestHandler):
     def get(self):
-        self.response.out.write("<head>")
-        self.response.out.write('<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>\n')
-        self.response.out.write('<script type="text/javascript" src="/static/js/jquery/jquery.svg.js"></script>\n')
-        self.response.out.write('<script type="text/javascript">\n')
-        self.response.out.write(" var posx = -1; \n var posy = -1;\n")
-        self.response.out.write(" var pos1x = -1; \n var pos1y = -1;\n")
-        self.response.out.write(" var holding = null;\n var boxCount = 0;")
-        self.response.out.write(" var topAdjustment = 55; \n var leftAdjustment = 5;")
-        
-        #move
-        self.response.out.write(' $(document).ready(function(){\n    $(document).mousemove(function(e){ \n')
-        self.response.out.write('    posx = e.pageX - leftAdjustment;\n     posy = e.pageY-topAdjustment;\n')
-        self.response.out.write('    });\n')
-        self.response.out.write('  });\n') 
-        
-        #mouse down
-        self.response.out.write(' $(document).ready(\n')
-        self.response.out.write('    function(){    $("#svgbasics").mousedown(function(e) {\n')
-        self.response.out.write('      pos1x = e.pageX - leftAdjustment;\n')
-        self.response.out.write('      pos1y = e.pageY-topAdjustment;\n')
-        self.response.out.write("      var size = document.getElementById('svgbasics').firstChild.childNodes.length; var string = '';\n")
-        self.response.out.write('      for (var i = size - 1; i >= 0; i--) {\n')
-        self.response.out.write('         el = document.getElementById("svgbasics").firstChild.childNodes[i]; \n')
-        self.response.out.write('         box = document.getElementById("svgbasics").firstChild.childNodes[i].firstChild; \n')
-        #self.response.out.write('         string = string + "(box.x.animVal.value < posx) = " + (box.x.animVal.value < posx) + ' +
-        #                            '", box.x.animVal.value + box.width.animVal.value > posx: " + (box.x.animVal.value + box.width.animVal.value > posx) + ' + 
-        #                            '", (box.y.animVal.value < posy): " + (box.y.animVal.value < posy) + "; (box.y.animVal.value + box.height.animVal.value > posy): " + (box.y.animVal.value + box.height.animVal.value > posy) + ", ely: " + box.y.animVal.value + "; y-pos: " + posy + ", y+height: " + (box.y.animVal.value+box.height.animVal.value) + ".          ";\n')
-        self.response.out.write('         if((box.x.animVal.value < posx) && (box.x.animVal.value + box.width.animVal.value > posx) \n&& (box.y.animVal.value < posy) && (box.y.animVal.value + box.height.animVal.value > posy)) { //assuming rectangles for now\n')
-        self.response.out.write('            holding = el;\n')
-        self.response.out.write('            i = -1;\n')
-        
-        self.response.out.write('         } else { holding = null; }\n')
-        #self.response.out.write('      }\n $("span").text(string);\n')
-        self.response.out.write('    }});});\n') 
-        
-        #mouse up
-        self.response.out.write(" function release() {\n")
-        self.response.out.write("      if (holding == null) drawShape(); else {\n")
-        #self.response.out.write('            alert(" activate!");\n')
-        self.response.out.write("         svg = $('#svgbasics').svg('get');\n")
-        self.response.out.write("         el = svg.getElementById(holding.id);\n")
-        self.response.out.write("         width = el.firstChild.width.animVal.value;\n")
-        self.response.out.write("         height = el.firstChild.height.animVal.value;\n")
-        self.response.out.write("         svg.remove(el);\n")
-        self.response.out.write("         var group = svg.group(null, holding.id);\n")
-        self.response.out.write("         svg.rect(group, posx, posy, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 2});\n")
-        self.response.out.write("      }\n")
-        self.response.out.write(" }\n")
-        
-
-        self.response.out.write(" function drawShape() {\n    var shape = this.id;\n    var svg = $('#svgbasics').svg('get');\n")
-        self.response.out.write("    var x = 0; \n    var y = 0; \n    var width = 0; \n    var height = 0;\n")
-        self.response.out.write("    if (pos1x > posx) {\n      x = posx;\n      width = pos1x - posx;\n    " + 
-                                "} else { \n      x = pos1x;\n      width = posx - pos1x;\n    }\n")
-        self.response.out.write("    if (pos1y > posy) {\n      y = posy;\n      height = pos1y - posy;\n    " + 
-                                "} else { \n      y = pos1y;\n      height = posy - pos1y;\n    }\n")#$('span').text(document.getElementById('svgbasics').firstChild.childNodes.length);") #
-        self.response.out.write("    var group = svg.group(null, 'box_' + boxCount);\n")
-        self.response.out.write("    svg.rect(group, x, y, width, height, {fill: 'blue', stroke: 'blue', strokeWidth: 4});\n")
-        self.response.out.write("    boxCount++;\n")
-        self.response.out.write(" }")
-        
-        self.response.out.write(' $(function() {')
-        self.response.out.write("    $('#svgbasics').svg({onLoad: drawInitial});\n")
-        self.response.out.write('    $("#svgbasics").mouseup(release);\n') 
-        self.response.out.write(" }\n );\n")
-        
-        self.response.out.write(" function drawInitial(svg) {\n")
-        self.response.out.write("    $('span').text(document.getElementById('svgbasics').childNodes.length);\n")
-        self.response.out.write(" }\n")
-        self.response.out.write(" </script>\n")
-        
-        self.response.out.write("</head>")
-        
-        # Set the cross origin resource sharing header to allow AJAX
-        #self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        self.response.out.write("<body>")
-        # Create a client class which will make HTTP requests with Google Docs server. 
-        self.response.out.write('Welcome to the Board Game Platform\n')
-        self.response.out.write('<span></span>\n')
-        self.response.out.write(""" <form action='oauth2callback' method='post' name ='oauth2'>
-            <input type = "hidden" name = "type" value="login" />
-            <input type="submit" value="Enter!"/></form> \n""")
-        self.response.out.write('<div id="svgbasics" style="border-style:double;height:400px;border-width:5px"></div>')
-        self.response.out.write("</body>")
-
+	imported = templ()
+	self.response.out.write(imported)
 		
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),

@@ -4,6 +4,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.ext.webapp.util import run_wsgi_app 
 from google.appengine.ext.webapp import template
+from google.appengine.api import urlfetch
 
 import atom.http_core
 import gdata.gauth
@@ -20,10 +21,12 @@ class Config(object):
     CONSUMER_SECRET = 'qElHcIt4TIAV9tf4Z9JjjXAW'
     SCOPES = ['https://docs.google.com/feeds/'] 
     DEBUG = True
+    authURL = ""
 
 class Session(threading.local):
     token = gdata.gauth.OAuth2Token(client_id = Config.CONSUMER_KEY, client_secret = Config.CONSUMER_SECRET,
                                         scope = ' '.join(Config.SCOPES), user_agent=Config.APP_PLACE)
+    
     def __init__(self) :
         token = gdata.gauth.OAuth2Token(client_id = Config.CONSUMER_KEY, client_secret = Config.CONSUMER_SECRET,
                                         scope = ' '.join(Config.SCOPES), user_agent=Config.APP_PLACE)
@@ -43,7 +46,9 @@ class OAuthHandler(webapp.RequestHandler):
           CONSUMER_SECRET: string Secret generated during registration.
         """
     def post(self):
-        self.redirect( session.token.generate_authorize_url(redirect_uri=Config.APP_REDIRECT) )
+        url = session.token.generate_authorize_url(redirect_uri=Config.APP_REDIRECT)
+        Config.authURL = url
+        self.redirect( url )
         
     def get(self):
         url = atom.http_core.Uri.parse_uri(self.request.uri)

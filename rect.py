@@ -10,6 +10,7 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.ext.webapp import template
 
+from atom import data
 import gdata.data
 import gdata.docs.client
 import gdata.docs.data
@@ -23,6 +24,9 @@ import httplib, urllib, urllib2
 
 import oauth2
 import createmap
+import md5
+import uuid
+from urlparse import urlparse
 
 CHUNK_SIZE = 10485760
 
@@ -32,47 +36,57 @@ class ShapeHandler(webapp.RequestHandler):
         self.methods = ShapeHandlerMethods();
         
     def get(self):
-        s = SVG("rect", x=10, y=10, width=60, height=60, id='star')
-        
+       self.response.out.write("Hellox!")
+ 
     def post(self):
         func = None
-        action = self.request.get('action')
-        if action:
-            if action[0] == '_':
+        action = self.request.get("action")
+	if action:
+            if action == '_':
                 self.error(403) # access denied
                 return
-            else:
-                func = getattr(self.methods, action, None)
-
-        if not func:
-            self.error(404) # file not found
-            return
-
-        args = ()
-        while True:
-            key = 'arg%d' % len(args)
-            val = self.request.get(key)
-            if val:
-                args += (simplejson.loads(val),)
-            else:
-                break
-        result = func(*args)
+            elif action != 'DrawRect':
+            	self.error(404) # file not found
+            	return
+        body = self.request.body
+	result = self.methods.DrawRect(*body) #parse this!
         #self.response.out.write(simplejson.dumps(result))
         self.response.out.write(result)
+
+def extract(startingString, string) :
+	length = len(string)
+	start = len(startingString)
+	i = start
+	while (string[i] != '=') :
+		i = i + 1
+	beginning = i+1
+	while (string[i] != '&') :
+		i = i + 1
+	end = i
+	args = [string[beginning:end], string[:end]] 
+	return args 
 
 class ShapeHandlerMethods:
     #Put a rect on the drawing layer1
     def DrawRect(self, *args):
+	#Part 1: get our arguments
+	action = "action=DrawRect&"
+	args1 = extract(action, args)
+	x = args1[0]
+	args2 = extract(args1[1], args)
+	y = args2[0]
+	args1 = extract(args2[1], args)
+	width = args1[0]
+	args2 = extract(args1[1], args)
+	height = args2[0]
+
+	#part two: getting the references 
         client = gdata.docs.client.DocsClient(source=oauth2.Config.APP_PLACE)
         client.ssl = True
-            # This is the token instantiated in the oauth section.
+         # This is the token instantiated in the oauth section.
         client = (oauth2.session.token).authorize(client)
         folders_feed = client.get_all_resources(uri='/feeds/default/private/full/-/folder')
-        
-        x = args[0]
-        y = args[1]
-        width = args[2]
-        height = args[3]
+         
         #Grab layer1
         for entry in folders_feed :
             if entry.title.text == 'Map' :
@@ -82,8 +96,9 @@ class ShapeHandlerMethods:
         mapfeed = client.get_all_resources(uri=map.content.src)
         for entry in mapfeed:
             if entry.title.text == "Layer1" :
-                l1b = False
                 layer1entry = entry
+            if entry.title.text == "Layer2" :
+                layer2entry = entry
                 link = entry.get_resumable_edit_media_link()
                 
         #Optional: download layer1 as an SVG
@@ -91,40 +106,66 @@ class ShapeHandlerMethods:
         oldcontent = content
         #Replace it's content with our content
         
-        layer = '<svg version="1.1" width="800" height="600"><g id="box_0"><rect x="' + str(x) + '" y="' + str(y) + '" width="' + str(width) + '" height="' + str(height) + '" fill="blue" stroke="blue" stroke-width="4"></rect></g></svg>'
-        #SVG("rect", x=10, y=10, width=60, height=60, id='star')
+        #layer = layer1entry.content.src
+        layer = '<svg xmlns:ns0="http://www.w3.org/2005/Atom" width="800" height="600"><g id="box_0"><rect x="' + str(x) + '" y="' + str(y) + '" width="' + str(width) + '" height="' + str(height) + '" fill="blue" stroke="blue" stroke-width="4"></rect></g></svg>'
+        length = len(layer)
+	#SVG("rect", x=10, y=10, width=60, height=60, id='star')
         #Stated that strings lack the attribue "_become_child" 
         #g.save("tmp.svg")
         #Reupload
-        layer1entry.title = 'Updated title'
-        
+        #layer2entry.content.src = layer1entry.content.src
+        #client.update(layer2entry)
         #return (layer1entry.get_elements())[24].to_string() + (layer1entry.get_elements())[25].to_string()
         #response = client.put(link, layer1entry.to_string())
-        #data = urllib.urlencode(layer)
-        #conn = httplib.HTTPConnection(link)
-        #headers = {"GData-Version" : 3, "Authorization" : client, "If-Match" : "*",
-        #           "Content-Length" : 480000, "Content-Type" : "img/svg", 
-        #           "X-Upload-Content-Length" : 480000, "X-Upload-Content-Type" : "img/svg" }
-        #req = conn.request("POST", "", headers, data)
         
-        file_name = files.blobstore.create(mime_type='application/octet-stream')
+        href = "https://docs.google.com/feeds" + (link.href)[51:] #/feeds/upload/create-session/default/private/full/"
+        myHeaders = {"GData-Version" : 3, "Content-Length" : length,
+                     "Content-Type" : "image/svg+xml", "Authorization" : oauth2.session.token.access_token}
+                   #"X-Upload-Content-Length" : 1000, "X-Upload-Content-Type" : "application/atom+xml" }
         
-        with files.open(file_name, 'a') as f:
-            f.write(layer)
+        payload2 = '<?xml version="1.0" encoding="UTF-8"?>' + '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:docs="http://schemas.google.com/docs/2007">' + '<title>Legal Contract</title>' + '</entry>'
+        #'<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">  <circle cx="100" cy="50" r="40" stroke="black"  stroke-width="2" fill="red" /></svg>'
+        try :
+            result = urlfetch.fetch(url = "https://docs.google.com/feeds/upload/create-session/default/private/full",
+                                    payload = payload2, #'<?xml version="1.0" encoding="utf-8"?><atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:scope ="http://schemas.google.com/acl/2007:scope" xmlns:apps="http://schemas.google.com/apps/2006"></atom:entry>',
+                                #payload = layer,
+                                    method = urlfetch.POST,
+                                    headers = myHeaders)
+        except urllib2.URLError, e:
+            return e
+        return result.content#return link.href#result.status_code #+ " + " + href #<google.appengine.api.urlfetch._URLFetchResult object at 0xaf38d507abe08bf8>
+        #conn = httplib.HTTPConnection(link.href)
+        #conn.connect()
+        #headers = {"Host" : "docs.google.com", "GData-Version" : 3, "Authorization" : oauth2.session.token,
+        #           "If-Match" : "*", "Content-Length" : 0, 
+        #           "X-Upload-Content-Length" : 1000, "X-Upload-Content-Type" : "img/svg" }
+        #req = conn.request("PUT", layer, "", headers)
+        #response = conn.getresponse()
         
-        files.finalize(file_name)
+        #req = urllib2.Request(layer2entry.content.src)
+        #opennedim = urllib2.urlopen(req)
         
-        blob_key = files.blobstore.get_blob_key(file_name)
+        #file_name = files.blobstore.create(mime_type='application/octet-stream')
+        
+        #with files.open(file_name, 'a') as f:
+         #   f.write(opennedim)
+        
+        #files.finalize(file_name)
+        
+        #blob_key = files.blobstore.get_blob_key(file_name)
         
         #Blob has been uploaded. Now using the resumable uploader
         
-        blob_info = blobstore.BlobInfo.get(blob_key)
-        image = blob_info.open()
-        file_size = blob_info.size
+        #blob_info = blobstore.BlobInfo.get(blob_key)
+        #image = blob_info.open()
+        #file_size = blob_info.size
         
-        #uploader = gdata.client.ResumableUploader(client, image, blob_info.content_type, file_size,
-        #                                          chunk_size = CHUNK_SIZE, desired_class="StringProperty")
+        
+        #uploader = gdata.client.ResumableUploader(client, opennedim, "img/svg", file_size,
+         #                                         chunk_size = CHUNK_SIZE)
         #new_entry = uploader.UploadFile('/feeds/upload/create-session/default/private/full', 
-        #                                entry = layer1entry)
-        #updatedlayer1 = client.Update(layer1entry, media_source = ms)
-        return "Hizy"
+         #                               entry = layer2entry)
+        #updatedlayer = client.Update(layer2entry, media_source = ms)
+        #return "Got Through!"
+
+        #return req
