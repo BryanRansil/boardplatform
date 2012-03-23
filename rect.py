@@ -49,9 +49,9 @@ class ShapeHandler(webapp.RequestHandler):
             	self.error(404) # file not found
             	return
         body = self.request.body
-	result = self.methods.DrawRect(*body) #parse this!
-        #self.response.out.write(simplejson.dumps(result))
-        self.response.out.write(result)
+	#result = self.methods.DrawRect(*body) #parse this!
+        self.response.out.write(simplejson.dumps(result))
+        #self.response.out.write(result)
 
 def extract(startingString, string) :
 	length = len(string)

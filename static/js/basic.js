@@ -81,7 +81,6 @@ function InstallFunction(obj, name) {
 
 var server = {};
 InstallFunction(server, 'DrawRect');
-    
         
        // #Ajax Request
 function Request(function_name, opt_argv) {
@@ -99,7 +98,15 @@ function Request(function_name, opt_argv) {
     var async = (callback != null);
     
     //Get the action
-    var query = 'action=' + encodeURIComponent(function_name);
+    var JSONObject = { "rect" : [
+	{ "x" : opt_argv[0],
+	  "y" : opt_argv[1],
+	  "width" : opt_argv[2],
+	  "height" : opt_argv[3]
+	}
+      ] 
+    };
+    /*var query = 'action=' + encodeURIComponent(function_name);
     //Get the arguments
     for (var i = 0; i < opt_argv.length; i++) {
         var key = 'arg' + i;
@@ -107,7 +114,7 @@ function Request(function_name, opt_argv) {
         query += '&' + key + '=' + encodeURIComponent(val);
     }
     query += '&time=' + new Date().getTime(); //timestamp!
-    
+   */ 
 /*
 	//V1: sends an object form and gets no response from the server
 	= {
@@ -133,7 +140,7 @@ function Request(function_name, opt_argv) {
     //the part of my server I want this to go to
     req.open('POST', 'http://boardplatform.appspot.com/rect', async);
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); 	
-	//alert(query);    
+	alert(JSONObject);    
     
     //the request body!
     if (async) {
@@ -152,7 +159,7 @@ function Request(function_name, opt_argv) {
     }
 
   // Make the actual request\
-  req.send(query);
+  req.send(JSONObject);
 }
 
  //Drawing a rectangle once the server responds
