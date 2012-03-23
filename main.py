@@ -83,8 +83,6 @@ def templ ():
                  svg.rect(group, posx, posy, width, height, {fill: 'yellow', stroke: 'navy', strokeWidth: 2});
               }
          }
-        
-
 
          function drawShape() {
             var shape = this.id;
