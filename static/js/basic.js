@@ -106,6 +106,7 @@ function Request(function_name, opt_argv) {
 	}
       ] 
     };
+    var sendJSON = JSON.stringify(JSONObject);
     /*var query = 'action=' + encodeURIComponent(function_name);
     //Get the arguments
     for (var i = 0; i < opt_argv.length; i++) {
@@ -140,7 +141,7 @@ function Request(function_name, opt_argv) {
     //the part of my server I want this to go to
     req.open('POST', 'http://boardplatform.appspot.com/rect', async);
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); 	
-	alert(JSONObject);    
+	alert(sendJSON);    
     
     //the request body!
     if (async) {
@@ -159,7 +160,7 @@ function Request(function_name, opt_argv) {
     }
 
   // Make the actual request\
-  req.send(JSONObject);
+  req.send(sendJSON);
 }
 
  //Drawing a rectangle once the server responds

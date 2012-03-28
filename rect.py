@@ -17,8 +17,8 @@ import gdata.docs.data
 from gdata.docs.data import Resource
 import gdata.service
 from svgfig.interactive import *
-from django.utils import simplejson
 import sys
+import simplejson
 
 import httplib, urllib, urllib2
 
@@ -48,37 +48,23 @@ class ShapeHandler(webapp.RequestHandler):
             elif action != 'DrawRect':
             	self.error(404) # file not found
             	return
-        body = self.request.body
-	#result = self.methods.DrawRect(*body) #parse this!
-        self.response.out.write(simplejson.dumps(result))
+	jsonstring = urllib.unquote(self.request.body) #simplejson.loads(self.request.body) #result = self.methods.DrawRect(*body) #parse this!
+	reduced = jsonstring[:len(jsonstring)-1]
+	loaded = simplejson.loads(reduced)
+	returnval = self.methods.DrawRect(loaded['rect'][0])
+	self.response.out.write(returnval)
+        #self.response.out.write(simplejson.dumps(result))
         #self.response.out.write(result)
-
-def extract(startingString, string) :
-	length = len(string)
-	start = len(startingString)
-	i = start
-	while (string[i] != '=') :
-		i = i + 1
-	beginning = i+1
-	while (string[i] != '&') :
-		i = i + 1
-	end = i
-	args = [string[beginning:end], string[:end]] 
-	return args 
 
 class ShapeHandlerMethods:
     #Put a rect on the drawing layer1
     def DrawRect(self, *args):
 	#Part 1: get our arguments
-	action = "action=DrawRect&"
-	args1 = extract(action, args)
-	x = args1[0]
-	args2 = extract(args1[1], args)
-	y = args2[0]
-	args1 = extract(args2[1], args)
-	width = args1[0]
-	args2 = extract(args1[1], args)
-	height = args2[0]
+	a = args[0]
+	y = a['y']
+	x = a['x']
+	width = a['width']
+	height = a['height']
 
 	#part two: getting the references 
         client = gdata.docs.client.DocsClient(source=oauth2.Config.APP_PLACE)
